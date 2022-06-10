@@ -1,0 +1,18 @@
+#container {
+  background-color: beige;
+  height: 100%;
+  width: 100%;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+#cloner {
+  display: none;
+}
+
+#container svg {
+  stroke: black;
+  fill: white;
+  position: absolute;
+}
