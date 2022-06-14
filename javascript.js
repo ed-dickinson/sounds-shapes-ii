@@ -12,6 +12,8 @@ let click = {
   on_shape : false
 }
 
+let dom_directory = {}
+
 let current_shape = undefined
 
 let shapes = []
@@ -19,8 +21,10 @@ let shapes = []
 const createShape = () => {
   let new_shape = new Shape(click.path)
   shapes.push(new_shape)
-  // new_shape.dom.addEventListener('mousedown', new_shape.updateShape())
-  // return {shape: new_shape, dom: new_shape.dom}
+  new_shape.dom.object = new_shape
+  new_shape.dom.addEventListener('mousedown', () => {
+    current_shape = new_shape.dom.object
+  })
   return new_shape
 }
 
@@ -43,7 +47,6 @@ const mouseMove = () => {
   current_shape.updateShape(click.path)
   if (!click.on_shape && !click.created_shape) {
 
-    console.log('created shape')
     click.created_shape = true
   }
 
@@ -52,6 +55,7 @@ const mouseMove = () => {
 const mouseDown = () => {
   if (event.path[0].classList.contains('path')) { // if click on existing shape
     click.on_shape = true
+    click.path = current_shape.path
   } else {
     click.on_shape = false
     current_shape = createShape()
@@ -76,7 +80,7 @@ function Shape(path) {
   this.dom.children[0].setAttribute('fill', `url(#grad${this.colour})`)
 
   this.updateShape = (path) => {
-    console.log('updating shape', path)
+
     path.sort((a, b)=>{return a.x - b.x})
     this.path = path
     let path_string = ''
@@ -92,9 +96,6 @@ function Shape(path) {
     let reverse_path = path.sort ((a, b)=>{return b.x - a.x})
     let path_i = 0
     reverse_path.forEach(point => {
-
-      // let point = reverse_path[i]
-      console.log(point)
       let i2 = path_i < path_length / 2 ? path_i * 4 : (path_length - path_i - 1) * 4
       let adjusted_y = point.y + i2
       path_string += `L ${point.x} ${adjusted_y} `
