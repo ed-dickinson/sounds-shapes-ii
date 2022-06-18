@@ -42,11 +42,11 @@ const hUpdater = (path) => {
   let reverse_path = path.sort((a, b)=>{return b.x - a.x})
   let path_i = 0
   let path_count = path.filter(point => {return point !== undefined}).length
-  
+
   reverse_path.forEach(point => {
     let i2 = path_i < path_count / 2 ? path_i * 4 : (path_count - path_i - 1) * 4
 
-    let original_point = path.find(n=>{return n.x === point.x})
+    let original_point = path.find(n=>{return (n.x === point.x) && (n.y === point.y)})
     original_point.h = i2
 
     let adjusted_y = point.y + point.h
@@ -59,7 +59,11 @@ const mouseMove = () => {
   click.mousemoved = true
 
   let time_at_this_point = new Date().getTime()
-  click.path[event.x] = {x: event.x, y: event.y, h: 0}
+  if (click.path[event.x] === undefined) {
+    click.path[event.x] = {x: event.x, y: event.y, h: null}
+  }
+  // console.log(event.x)
+
   hUpdater(click.path)
   current_shape.updateShape(click.path)
   if (!click.on_shape && !click.created_shape) {
@@ -105,9 +109,8 @@ function Shape(path) {
   this.updateShape = (path) => {
 
     this.path = path
-    console.log(path)
 
-    let sorted_path = path.sort((a, b)=>{return a.x - b.x})
+    let sorted_path = this.path.sort((a, b)=>{return a.x - b.x})
 
     let path_string = ''
     let path_length = 0
@@ -119,29 +122,17 @@ function Shape(path) {
       }
       path_length++
     })
-    let reverse_path = path.sort ((a, b)=>{return b.x - a.x})
+    let reverse_path = this.path.sort ((a, b)=>{return b.x - a.x})
     let path_i = 0
-    // reverse_path.forEach(point => {
-    //   let i2 = path_i < path_length / 2 ? path_i * 4 : (path_length - path_i - 1) * 4
-    //   console.log(this.path)
-    //
-    //   let original_point = path.find(n=>{return n.x === point.x})
-    //   original_point.h = i2
-    //
-    //   let adjusted_y = point.y + point.h
-    //   path_string += `L ${point.x} ${adjusted_y} `
-    //   path_i++
-    // })
+
     reverse_path.forEach(point => {
+      if (point.h === null) return
+
       let adjusted_y = point.y + point.h
       path_string += `L ${point.x} ${adjusted_y} `
       path_i++
     })
-    // reverse_path.forEach(point => {
-    //   let adjusted_y = point.y + point.h
-    //   path_string += `L ${point.x} ${adjusted_y} `
-    //   path_i++
-    // })
+
     path_string += 'Z'
     this.dom.children[0].setAttribute('d', path_string)
   }
