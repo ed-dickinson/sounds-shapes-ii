@@ -1,6 +1,7 @@
 let dom = {
   container : document.querySelector('#container'),
-  cloner : document.querySelector('#cloner .shape')
+  cloner : document.querySelector('#cloner .shapes'),
+  svg : document.querySelector('#container .shapes')
 }
 
 let click = {
@@ -9,7 +10,8 @@ let click = {
   mousedown : null,
   mousemoved : false,
   created_shape : false,
-  on_shape : false
+  on_shape : false,
+  drawing_y_or_h : null
 }
 
 let dom_directory = {}
@@ -36,6 +38,7 @@ const mouseUp = () => {
   click.path = []
   click.mousemoved = false
   click.created_shape = false
+  click.drawing_y_or_h = null
 }
 
 const hUpdater = (path) => {
@@ -58,34 +61,63 @@ const mouseMove = () => {
 
   click.mousemoved = true
 
-  let time_at_this_point = new Date().getTime()
-  if (click.path[event.x] === undefined) {
-    click.path[event.x] = {x: event.x, y: event.y, h: null}
-  }
-  // console.log(event.x)
 
-  hUpdater(click.path)
-  current_shape.updateShape(click.path)
+  // console.log(event.x)
+  if (click.on_shape) {
+
+    if (click.path[event.x]) {
+      click.path[event.x].x = event.x
+      click.path[event.x].y = event.y
+    } else {
+      click.path[event.x] = click.drawing_y_or_h === 'y'
+        ? {x: event.x, y: event.y, h: null}
+        : {x: event.x, y: null, h: event.y}
+    }
+    current_shape.updateShape(click.path)
+
+  } else {
+    if (click.path[event.x] === undefined) {
+      click.path[event.x] = {x: event.x, y: event.y, h: null}
+    }
+    hUpdater(click.path)
+    current_shape.updateShape(click.path)
+  }
+
   if (!click.on_shape && !click.created_shape) {
 
     click.created_shape = true
   }
-  time_at_last_point = new Date().getTime()
 }
 
-let time_at_last_point = null
+const findClosestSide = (x, y) => {
+  // find closest point
+  let path_point = click.path.find(point=>{return point === undefined ? undefined : point.x === x})
+  let ppi = 0
+  while (path_point === undefined || path_point.h === 0) {
+    ppi++
+    path_point = click.path.find(n=>{return n === undefined ? undefined : n.x === x + ppi})
+    //check in other direction
+    if (path_point === undefined || path_point.h === 0) {
+      path_point = click.path.find(n=>{return n === undefined ? undefined : n.x === x - ppi})
+    }
+  }
+  let output = y > path_point.y + (path_point.h / 2) ? 'h' : 'y'
+  return output
+}
+
 
 const mouseDown = () => {
   if (event.path[0].classList.contains('path')) { // if click on existing shape
     click.on_shape = true
     click.path = current_shape.path
+    click.drawing_y_or_h = findClosestSide(event.x, event.y)
+    console.log(click.drawing_y_or_h)
   } else {
     click.on_shape = false
     current_shape = createShape()
     console.log(current_shape)
   }
-  time_at_last_point = new Date().getTime()
-  console.log(time_at_last_point)
+
   click.mousedown = { x: event.x, y: event.y }
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('mouseup', mouseUp)
@@ -98,13 +130,17 @@ dom.container.addEventListener('mousedown', mouseDown)
 function Shape(path) {
 
   this.path = path
-  this.dom = dom.cloner.cloneNode(true)
-  dom.container.appendChild(this.dom)
-  this.dom.setAttribute('viewBox', `0 0 ${container.offsetWidth} ${container.offsetHeight}`)
 
+  this.dom = dom.svg.children[0].cloneNode(true)
+  // this.dom = document.createElement('path')
+  dom.svg.appendChild(this.dom)
+  dom.svg.setAttribute('viewBox', `0 0 ${container.offsetWidth} ${container.offsetHeight}`)
+  this.dom.classList.add('path')
 
   this.colour = shapes.length === 0 ? 1 : shapes[shapes.length-1].colour === 6 ? 1 : shapes[shapes.length-1].colour + 1
-  this.dom.children[0].setAttribute('fill', `url(#grad${this.colour})`)
+  this.dom.setAttribute('fill', `url(#grad${this.colour})`)
+
+  this.dom.addEventListener('mousedown', () => {console.log(this)})
 
   this.updateShape = (path) => {
 
@@ -118,6 +154,7 @@ function Shape(path) {
       if (path_string === '') {
         path_string = `M ${point.x} ${point.y} `
       } else {
+        if (point.y === null) return
         path_string += `L ${point.x} ${point.y} `
       }
       path_length++
@@ -134,7 +171,7 @@ function Shape(path) {
     })
 
     path_string += 'Z'
-    this.dom.children[0].setAttribute('d', path_string)
+    this.dom.setAttribute('d', path_string)
   }
 }
 

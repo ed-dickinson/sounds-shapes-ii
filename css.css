@@ -9,6 +9,10 @@
   box-sizing: border-box; */
 }
 
+svg.shapes path {
+  position: absolute;
+}
+
 #cloner {
   display: none;
 }
