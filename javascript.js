@@ -11,7 +11,8 @@ let click = {
   mousemoved : false,
   created_shape : false,
   on_shape : false,
-  drawing_y_or_h : null
+  drawing_y_or_h : null,
+  last_x_logged : null
 }
 
 let dom_directory = {}
@@ -57,6 +58,20 @@ const hUpdater = (path) => {
   })
 }
 
+const catchSkippedPoints = (new_x, last_x, path, y) => {
+  const array = path.filter(point => {return point.x > last_x && point.x < new_x})
+  console.log(array)
+  array.forEach(point => {
+    let found = findByX(point.x, path)
+    found.y = y
+  })
+}
+
+const findByX = (x, path) => {
+  let point = path.find(n=>{return n === undefined ? undefined : n.x === x})
+  return point
+}
+
 const mouseMove = () => {
 
   click.mousemoved = true
@@ -65,7 +80,9 @@ const mouseMove = () => {
   // console.log(event.x)
   if (click.on_shape) {
 
-    if (click.path[event.x]) {
+    // if (click.path[event.x]) {
+    // let found_point = findByX(event.x, click.path)
+    if (click.path[event.x] !== undefined) {
       click.path[event.x].x = event.x
       click.path[event.x].y = event.y
     } else {
@@ -73,6 +90,9 @@ const mouseMove = () => {
         ? {x: event.x, y: event.y, h: null}
         : {x: event.x, y: null, h: event.y}
     }
+    console.log(click.path[event.x])
+    catchSkippedPoints(event.x, click.last_x_logged, click.path, event.y)
+    click.last_x_logged = event.x
     current_shape.updateShape(click.path)
 
   } else {
@@ -111,7 +131,6 @@ const mouseDown = () => {
     click.on_shape = true
     click.path = current_shape.path
     click.drawing_y_or_h = findClosestSide(event.x, event.y)
-    console.log(click.drawing_y_or_h)
   } else {
     click.on_shape = false
     current_shape = createShape()
@@ -119,6 +138,7 @@ const mouseDown = () => {
   }
 
   click.mousedown = { x: event.x, y: event.y }
+  click.last_x_logged = event.x
   document.addEventListener('mousemove', mouseMove)
   document.addEventListener('mouseup', mouseUp)
 }

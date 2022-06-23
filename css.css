@@ -22,3 +22,10 @@ svg.shapes path {
   fill: white;
   position: absolute;
 }
+
+#timeline {
+  width: 1px;
+  position: absolute;
+  height: 100%;
+  background-color: black;
+}
